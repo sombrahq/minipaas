@@ -1,0 +1,53 @@
+@version: current
+@include "scl.conf"
+
+source s_local {
+    system();
+    internal();
+};
+
+source s_docker {
+    udp(ip("127.0.0.1") port(514));
+};
+
+# Filters
+filter f_errors {
+    level(err..emerg);
+};
+
+filter f_minipaas {
+    program("minipaas-.*");
+};
+
+filter f_keywords {
+    message("ERROR") or
+    message("CRITICAL") or
+    message("FATAL") or
+    message("PANIC");
+};
+
+
+# Telegram destination
+destination d_telegram {
+  telegram(
+    template("⚠ ${PROGRAM}@@${FULLHOST} | ${PRIORITY} ⚠\n---------------------------\n${MSG}")
+    throttle(1)
+    bot-id("{{ telegram_bot_token }}")
+    chat-id("{{ telegram_chat_id }}")
+  );
+};
+
+# Logs from minipaas-* containers
+log {
+    source(s_docker);
+    filter(f_minipaas);
+    filter(f_keywords);
+    destination(d_telegram);
+};
+
+# Logs of error level or higher from any program
+log {
+    source(s_local);
+    filter(f_errors);
+    destination(d_telegram);
+};

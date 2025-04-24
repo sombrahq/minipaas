@@ -1,0 +1,41 @@
+---
+- name: Set swarm-cronjob variables (for cronjob nodes)
+  set_fact:
+    # Choose appropriate architecture: use 'amd64' for x86_64, otherwise assume 'arm64'
+    swarm_cronjob_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+  when: is_main_manager
+
+- name: Download swarm-cronjob binary tarball (Only on Cronjob nodes)
+  get_url:
+    url: "https://github.com/crazy-max/swarm-cronjob/releases/download/v{{ swarm_cronjob_version }}/swarm-cronjob_{{ swarm_cronjob_version }}_linux_{{ swarm_cronjob_arch }}.tar.gz"
+    dest: "/tmp/swarm-cronjob.tar.gz"
+  when: is_main_manager
+
+- name: Extract Swarm-Cronjob binary
+  command: "tar -xzvf /tmp/swarm-cronjob.tar.gz -C /usr/local/bin --strip-components=1"
+  when: is_main_manager
+
+- name: Ensure Swarm-Cronjob is executable
+  file:
+    path: "/usr/local/bin/swarm-cronjob"
+    owner: root
+    group: root
+    mode: "0755"
+  when: is_main_manager
+
+- name: Copy Swarm-Cronjob systemd service file
+  copy:
+    src: swarm-cronjob.service
+    dest: "/etc/systemd/system/swarm-cronjob.service"
+  when: is_main_manager
+
+- name: Reload systemd to recognize Swarm-Cronjob service
+  command: systemctl daemon-reload
+  when: is_main_manager
+
+- name: Enable and start Swarm-Cronjob service
+  systemd:
+    name: swarm-cronjob
+    enabled: true
+    state: started
+  when: is_main_manager

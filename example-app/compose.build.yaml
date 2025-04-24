@@ -1,0 +1,9 @@
+services:
+  example:
+    build:
+      context: app
+      dockerfile: Dockerfile
+  example-migration:
+    build:
+      context: db
+      dockerfile: Dockerfile

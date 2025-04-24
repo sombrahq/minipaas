@@ -1,0 +1,15 @@
+---
+- name: Restart Docker
+  service:
+    name: docker
+    state: restarted
+
+- name: Restart Fail2Ban
+  service:
+    name: fail2ban
+    state: restarted
+
+- name: Restart Swarm-Cronjob
+  service:
+    name: swarm-cronjob
+    state: restarted

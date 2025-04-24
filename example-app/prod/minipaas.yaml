@@ -1,0 +1,10 @@
+project:
+  files:
+  - compose.yaml
+  - compose.build.yaml
+  - prod/compose.infra.yaml
+api:
+  host: tcp://localhost:2376
+  tls: .tls
+deploy:
+  version: 0.1.0

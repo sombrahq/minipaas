@@ -1,0 +1,13 @@
+{
+  "hosts": ["tcp://0.0.0.0:2376", "unix:///var/run/docker.sock"],
+  "insecure-registries" : ["registry:5000"],
+  "tlsverify": true,
+  "tlscacert": "/etc/docker/ca.pem",
+  "tlscert": "/etc/docker/server-cert.pem",
+  "tlskey": "/etc/docker/server-key.pem",
+  "log-driver": "syslog",
+  "log-opts": {
+    "syslog-address": "udp://127.0.0.1:514",
+    "tag": "minipaas-{{.Name}}"
+  }
+}

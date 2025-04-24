@@ -1,0 +1,13 @@
+---
+- name: Install required system packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - python3-pip
+    - virtualenv
+    - python3-setuptools
+    - python3-jsondiff
+    - python3-passlib
+    - python3-docker

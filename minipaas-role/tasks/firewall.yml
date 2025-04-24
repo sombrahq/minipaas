@@ -1,0 +1,22 @@
+- name: Ensure nftables is installed and enabled
+  apt:
+    name: nftables
+    state: present
+    update_cache: yes
+
+- name: Enable and start nftables
+  systemd:
+    name: nftables
+    enabled: yes
+    state: started
+
+- name: Generate nftables configuration file
+  template:
+    src: nftables.conf.j2
+    dest: /etc/nftables.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Reload nftables with new config
+  command: nft -f /etc/nftables.conf

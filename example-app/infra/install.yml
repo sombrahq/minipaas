@@ -1,0 +1,17 @@
+---
+- name: Install and Configure MiniPaaS
+  hosts: all
+  become: yes
+  vars:
+    minipaas_extra_ports: ["50022"]
+
+  roles:
+    - ../../minipaas-role
+
+  tasks:
+    - name: Add vagrant user to docker group
+      become: true
+      user:
+        name: vagrant
+        groups: docker
+        append: yes

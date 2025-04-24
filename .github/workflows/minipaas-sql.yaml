@@ -1,0 +1,81 @@
+name: MiniPaaS SQL
+
+on:
+  push:
+    tags:
+      - "*.*.*"       # e.g. 1.0.0  or  v1.2.3
+  pull_request:        # run tests on every PR as well
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB:     testdb
+          POSTGRES_USER:   test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        # Health-check so the job waits until Postgres is ready
+        options: >-
+          --health-cmd="pg_isready -U test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -U test -p 5432; do sleep 2; done
+
+      - name: Apply MiniPaaS SQL migrations
+        run: |
+          psql "postgresql://test:test@localhost:5432/testdb" \
+               -f minipaas-sql/minipaas-queues-framework.sql
+          psql "postgresql://test:test@localhost:5432/testdb" \
+               -f minipaas-sql/minipaas-streams-framework.sql
+        env: { PGPASSWORD: test }
+
+      - name: Smoke-test MiniPaaS functions
+        run: |
+          psql "postgresql://test:test@localhost:5432/testdb" \
+               -c "SELECT minipaas_queue_create('demo_q');"
+          psql "postgresql://test:test@localhost:5432/testdb" \
+               -c "SELECT minipaas_stream_create('demo_s');"
+          psql "postgresql://test:test@localhost:5432/testdb" \
+               -c "SELECT * FROM minipaas_queue_enqueue('demo_q', '{\"hello\":1}');"
+          psql "postgresql://test:test@localhost:5432/testdb" \
+               -c "SELECT * FROM minipaas_stream_publish('demo_s', '{\"evt\":1}');"
+        env: { PGPASSWORD: test }
+
+  build:
+    needs: test
+    runs-on: debian-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-minipaas-sql
+          path: minipaas-sql/
+
+  release:
+    needs: build
+    runs-on: debian-latest
+    steps:
+      - name: Download Linux AMD64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-minipaas-sql
+
+      - name: Release MiniPaaS SQL
+        uses: softprops/action-gh-release@v2

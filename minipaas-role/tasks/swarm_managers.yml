@@ -1,0 +1,44 @@
+---
+
+- name: Initialize Docker Swarm on Manager nodes
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ ansible_host }}"
+  when: is_manager
+
+- name: Get Worker Join Token on Manager node
+  command: docker swarm join-token -q worker
+  register: worker_token
+  changed_when: false
+  when: is_manager
+
+- name: Get Manager Join Token on Manager node
+  command: docker swarm join-token -q manager
+  register: manager_token
+  changed_when: false
+  when: is_manager
+
+- name: Store Join Tokens on Manager node
+  set_fact:
+    swarm_worker_token: "{{ worker_token.stdout }}"
+    swarm_manager_token: "{{ manager_token.stdout }}"
+  when: is_manager
+
+- name: Ensure /etc/caddy directory exists on manager nodes
+  file:
+    path: /etc/caddy
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: install_runtime
+
+- name: Copy default Caddyfile to manager nodes
+  copy:
+    src: Caddyfile
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: '0644'
+  when: install_runtime
+

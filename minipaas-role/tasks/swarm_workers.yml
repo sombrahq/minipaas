@@ -1,0 +1,9 @@
+---
+
+- name: Join Swarm as Worker Node
+  docker_swarm:
+    state: join
+    advertise_addr: "{{ ansible_host }}"
+    join_token: "{{ hostvars[groups['managers'][0]].swarm_worker_token }}"
+    remote_addrs: ["{{ hostvars[groups['managers'][0]].ansible_host }}:2377"]
+  when: is_worker

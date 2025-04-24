@@ -1,0 +1,16 @@
+---
+- name: Remove Swarm-Cronjob binary on non-cronjob hosts
+  file:
+    path: /usr/local/bin/swarm-cronjob
+    state: absent
+  when: inventory_hostname != groups['managers'][0]
+
+- name: Remove Swarm-Cronjob systemd service file on non-cronjob hosts
+  file:
+    path: /etc/systemd/system/swarm-cronjob.service
+    state: absent
+  when: inventory_hostname != groups['managers'][0]
+
+- name: Reload systemd on non-cronjob hosts
+  command: systemctl daemon-reload
+  when: inventory_hostname != groups['managers'][0]
