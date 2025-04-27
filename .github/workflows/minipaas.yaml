@@ -3,11 +3,12 @@ name: MiniPaaS CLI
 # Trigger on version tags like v1.2.3  OR manually
 on:
   push:
+    branches:
+      - main
     tags:
       - "*.*.*"
   pull_request:
   workflow_dispatch:
-
 env:
   # Keep Go version in one place
   GO_VERSION: '1.22'
@@ -18,7 +19,8 @@ jobs:
   # TEST JOB (runs once, covers all components)                             #
   ###########################################################################
   test:
-    runs-on: debian-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -53,6 +55,7 @@ jobs:
   # BUILD minipaas-cli                                             #
   ###########################################################################
   build-cli:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     strategy:
       matrix:
@@ -67,7 +70,7 @@ jobs:
           - goos: darwin
             os: macos-latest
           - goos: linux
-            os: debian-latest
+            os: ubuntu-latest
           - goos: windows
             os: windows-latest
             suffix: .exe
@@ -98,6 +101,7 @@ jobs:
   # BUILD minipaas-sql                                                 #
   ###########################################################################
   build-sql:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -112,8 +116,9 @@ jobs:
   # CREATE GITHUB                                                           #
   ###########################################################################
   release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [build-cli, build-sql]
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Download Linux AMD64 Artifacts
         uses: actions/download-artifact@v4
@@ -142,8 +147,9 @@ jobs:
   # PUBLISH minipaas-role TO ANSIBLE GALAXY                                 #
   ###########################################################################
   publish-role:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: release
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
