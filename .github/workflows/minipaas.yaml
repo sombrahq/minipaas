@@ -35,7 +35,8 @@ jobs:
         working-directory: minipaas-cli
 
       - name: Run tests
-        run: go test ./minipaas-cli/... -v
+        run: go test ./... -v
+        working-directory: minipaas-cli
 
       # ---------- Role lint ----------
       - name: Lint Ansible role
@@ -85,8 +86,9 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Install Dependencies
-        run: go mod tidy ./minipaas-cli/...
+      - name: Install dependencies
+        run: go mod tidy
+        working-directory: minipaas-cli
 
       - name: Build
         run: make -C minipaas-cli build WHAT=minipaas SUFFIX=${{ matrix.suffix }}
