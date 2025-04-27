@@ -53,3 +53,9 @@ Content-Type: application/json
 
 GET http://example.local/consumers
 Content-Type: application/json
+
+
+### Errors
+
+POST http://example.local/error/500
+Content-Type: application/json

@@ -2,8 +2,6 @@
 - name: Install and Configure MiniPaaS
   hosts: all
   become: yes
-  vars:
-    minipaas_extra_ports: ["50022"]
 
   roles:
     - ../../minipaas-role

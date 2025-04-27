@@ -39,11 +39,9 @@ This uses Vagrant to start a virtual machine for Docker Swarm and installs Docke
 ### Configure Environment Variables
 
 ```bash
-cp infra/.env.example infra/.env
-$EDITOR infra/.env
+export TELEGRAM_TOKEN=some-telegram-token  # use you telegram bot token
+export TELEGRAM_CHAT=-1000  # use you telegram chat ID
 ```
-
-Fill in values for `TELEGRAM_TOKEN` and `TELEGRAM_CHAT`.
 
 ### Generate TLS Certificates for the Docker API
 
