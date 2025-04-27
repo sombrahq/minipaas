@@ -1,45 +1,61 @@
 ---
-- name: The main manager
-  set_fact:
-    is_main_manager : "{{ inventory_hostname == groups['managers'][0] }}"
+- name: Set main manager flag
+  ansible.builtin.set_fact:
+    is_main_manager: "{{ inventory_hostname == groups['managers'][0] }}"
 
-- name: The main manager
-  set_fact:
-    is_manager : "{{ inventory_hostname in groups['managers'] }}"
+- name: Set manager role flag
+  ansible.builtin.set_fact:
+    is_manager: "{{ inventory_hostname in groups['managers'] }}"
 
-- name: The main manager
-  set_fact:
-    is_worker : "{{ inventory_hostname in groups['workers'] }}"
+- name: Set worker role flag
+  ansible.builtin.set_fact:
+    is_worker: "{{ inventory_hostname in groups['workers'] }}"
 
-- name: Whether to install the TLS for the Docker API or not
-  set_fact:
-    install_certificates : "{{ is_main_manager and minipaas_runtime_enabled }}"
+- name: Configure Docker API TLS
+  ansible.builtin.set_fact:
+    install_certificates: "{{ is_main_manager and minipaas_runtime_enabled }}"
 
-- name: Whether to deploy MiniPaaS default runtime or not
-  set_fact:
-    install_runtime : "{{ is_main_manager and minipaas_runtime_enabled }}"
+- name: Configure MiniPaaS runtime
+  ansible.builtin.set_fact:
+    install_runtime: "{{ is_main_manager and minipaas_runtime_enabled }}"
 
-- name: Whether Telegram is enabled
-  set_fact:
-    use_telegram : "{{ telegram_chat_id and telegram_bot_token }}"
+- name: Configure Telegram notifications
+  ansible.builtin.set_fact:
+    use_telegram: "{{ telegram_chat_id and telegram_bot_token }}"
 
 # node tools
-- import_tasks: install.yml
-- import_tasks: fail2ban.yml
-- import_tasks: monitoring.yml
-- import_tasks: syslog-ng.yml
+- name: Install system packages
+  ansible.builtin.import_tasks: install.yml
+
+- name: Setup fail2ban
+  ansible.builtin.import_tasks: fail2ban.yml
+
+- name: Configure monitoring
+  ansible.builtin.import_tasks: monitoring.yml
+
+- name: Setup syslog
+  ansible.builtin.import_tasks: syslog-ng.yml
 
 # docker
-- import_tasks: docker_conf_api.yml
-- import_tasks: docker_conf_normal.yml
-- import_tasks: docker.yml
-- import_tasks: swarm_managers.yml
-- import_tasks: swarm_ops.yml
-- import_tasks: swarm_workers.yml
+- name: Setup Docker API
+  ansible.builtin.import_tasks: docker_conf_api.yml
+- name: Configure Docker daemon
+  ansible.builtin.import_tasks: docker_conf_normal.yml
+- name: Install Docker
+  ansible.builtin.import_tasks: docker.yml
+- name: Setup Swarm managers
+  ansible.builtin.import_tasks: swarm_managers.yml
+- name: Configure Swarm operations
+  ansible.builtin.import_tasks: swarm_ops.yml
+- name: Setup Swarm workers
+  ansible.builtin.import_tasks: swarm_workers.yml
 
 # docker tools
-- import_tasks: cronjob.yml
-- import_tasks: cronjob_disable.yml
+- name: Configure cron jobs
+  ansible.builtin.import_tasks: cronjob.yml
+- name: Disable unused cron jobs
+  ansible.builtin.import_tasks: cronjob_disable.yml
 
 # PaaS
-- import_tasks: deploy.yml
+- name: Deploy MiniPaaS
+  ansible.builtin.import_tasks: deploy.yml

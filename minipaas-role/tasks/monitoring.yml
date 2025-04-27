@@ -1,12 +1,12 @@
 ---
 
 - name: Script names
-  set_fact:
+  ansible.builtin.set_fact:
     monitor_script: "/usr/local/bin/system-monitoring.sh"
     server_script: "/usr/local/bin/server-monitoring.sh"
 
 - name: Install required packages for system monitoring
-  apt:
+  ansible.builtin.apt:
     name:
       - curl
       - bc
@@ -18,12 +18,12 @@
       - iproute2
       - cron
     state: present
-    update_cache: yes
-  become: yes
+    update_cache: true
+  become: true
   when: use_telegram
 
 - name: Save Telegram secret variables to a file
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/telegram.secrets"
     content: |
       GROUP_ID="{{ telegram_chat_id }}"
@@ -31,36 +31,36 @@
     owner: root
     group: root
     mode: '0600'
-  become: yes
+  become: true
   when: use_telegram
 
 - name: Download the system monitoring script from URL
-  get_url:
+  ansible.builtin.get_url:
     url: "https://raw.githubusercontent.com/sombrahq/telegram-bash-system-monitoring/refs/tags/v4.1.0/system-monitoring.sh"
     dest: "{{ monitor_script }}"
     owner: root
     group: root
     mode: '0755'
-  become: yes
+  become: true
   when: use_telegram
 
 - name: Create the server monitoring script from inline content
-  copy:
+  ansible.builtin.copy:
     dest: "{{ server_script }}"
     content: |
       {{ monitor_script }} --NAME {{ inventory_hostname }} --CPU 80 --RAM 70 --DISK 90 --LA1 --LA5 --LA15 --REBOOT --SSH-LOGIN --DOCKER-MONITOR
     owner: root
     group: root
     mode: '0755'
-  become: yes
+  become: true
   when: use_telegram
 
 - name: Install the monitoring script in /etc/cron.d for reboot
-  cron:
+  ansible.builtin.cron:
     name: "Server Monitoring Script"
     special_time: reboot
     job: "{{ server_script }}"
     user: root
     cron_file: monitoring-telegram
-  become: yes
+  become: true
   when: use_telegram

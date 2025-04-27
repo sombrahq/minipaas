@@ -1,23 +1,22 @@
-
 - name: Install syslog-ng
-  apt:
+  ansible.builtin.apt:
     name:
       - syslog-ng
       - syslog-ng-core
       - syslog-ng-scl
       - syslog-ng-mod-http
     state: present
-    update_cache: yes
-  become: yes
+    update_cache: true
+  become: true
 
 - name: Deploy syslog-ng configuration from template
-  template:
+  ansible.builtin.template:
     src: "syslog-ng.conf.j2"
     dest: "/etc/syslog-ng/syslog-ng.conf"
     owner: root
     group: root
     mode: '0644'
-  become: yes
+  become: true
 
 - name: Ensure /run/syslog-ng directory exists
   ansible.builtin.file:
@@ -28,7 +27,7 @@
     mode: '0755'
 
 - name: Restart syslog-ng service
-  service:
+  ansible.builtin.service:
     name: syslog-ng
     state: restarted
-  become: yes
+  become: true

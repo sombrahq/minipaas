@@ -1,7 +1,7 @@
 ---
 - name: Install Fail2Ban
-  apt:
+  ansible.builtin.apt:
     name: fail2ban
     state: present
-    update_cache: yes
+    update_cache: true
   notify: Restart Fail2Ban

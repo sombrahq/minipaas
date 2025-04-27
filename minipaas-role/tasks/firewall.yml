@@ -1,22 +1,20 @@
 - name: Ensure nftables is installed and enabled
-  apt:
+  ansible.builtin.apt:
     name: nftables
     state: present
-    update_cache: yes
+    update_cache: true
 
-- name: Enable and start nftables
-  systemd:
-    name: nftables
-    enabled: yes
-    state: started
 
 - name: Generate nftables configuration file
-  template:
+  ansible.builtin.template:
     src: nftables.conf.j2
     dest: /etc/nftables.conf
     owner: root
     group: root
     mode: '0644'
 
-- name: Reload nftables with new config
-  command: nft -f /etc/nftables.conf
+- name: Enable and start nftables
+  ansible.builtin.systemd:
+    name: nftables
+    enabled: true
+    state: started

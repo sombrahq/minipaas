@@ -1,15 +1,15 @@
 ---
 - name: Restart Docker
-  service:
+  ansible.builtin.service:
     name: docker
     state: restarted
 
 - name: Restart Fail2Ban
-  service:
+  ansible.builtin.service:
     name: fail2ban
     state: restarted
 
 - name: Restart Swarm-Cronjob
-  service:
+  ansible.builtin.service:
     name: swarm-cronjob
     state: restarted

@@ -1,5 +1,5 @@
 - name: Ensure Docker directory exists
-  file:
+  ansible.builtin.file:
     path: /etc/docker
     state: directory
     owner: root
@@ -8,7 +8,7 @@
   when: install_certificates
 
 - name: Copy CA certificate on API nodes
-  copy:
+  ansible.builtin.copy:
     src: "{{ docker_tls_dir }}/ca.pem"
     dest: "/etc/docker/ca.pem"
     owner: root
@@ -17,7 +17,7 @@
   when: install_certificates
 
 - name: Copy server certificate on API nodes
-  copy:
+  ansible.builtin.copy:
     src: "{{ docker_tls_dir }}/server-cert.pem"
     dest: "/etc/docker/server-cert.pem"
     owner: root
@@ -26,7 +26,7 @@
   when: install_certificates
 
 - name: Copy server key on API nodes
-  copy:
+  ansible.builtin.copy:
     src: "{{ docker_tls_dir }}/server-key.pem"
     dest: "/etc/docker/server-key.pem"
     owner: root
@@ -35,7 +35,7 @@
   when: install_certificates
 
 - name: Configure Docker API for TLS on API nodes
-  copy:
+  ansible.builtin.copy:
     src: daemon_api.json
     dest: /etc/docker/daemon.json
     owner: root

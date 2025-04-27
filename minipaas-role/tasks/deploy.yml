@@ -1,14 +1,14 @@
 ---
 - name: Render the MiniPaaS Stack Template
   when: install_runtime
-  template:
+  ansible.builtin.template:
     src: "paas-default-stack.yml.j2"
     dest: "/tmp/paas-default-stack.yml"
     mode: "0644"
 
 - name: Deploy MiniPaaS Stack
   when: install_runtime
-  docker_stack:
+  community.docker.docker_stack:
     state: present
     name: minipaas
     compose:
