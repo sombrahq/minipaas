@@ -1,5 +1,7 @@
 ---
 galaxy_info:
+  role_name: minipaas-role
+  namespace: sombrahq_bot
   author: "SombraHQ"
   description: "Ansible role to install and configure MiniPaaS"
   license: "MIT"
