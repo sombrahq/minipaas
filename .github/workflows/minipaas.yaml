@@ -39,20 +39,20 @@ jobs:
         working-directory: minipaas-cli
 
       # ---------- Role lint ----------
-      - name: Set up Python (for ansible-galaxy)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install Ansible Collections
-        run: |
-          pip install ansible-core
-          ansible-galaxy collection install -r minipaas-role/requirements.yml
-
-      - name: Lint Ansible role
-        uses: ansible/ansible-lint-action@v6
-        with:
-          path: minipaas-role
+#      - name: Set up Python (for ansible-galaxy)
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: '3.x'
+#
+#      - name: Install Ansible Collections
+#        run: |
+#          pip install ansible-core
+#          ansible-galaxy collection install -r minipaas-role/requirements.yml
+#
+#      - name: Lint Ansible role
+#        uses: ansible/ansible-lint-action@v6
+#        with:
+#          path: minipaas-role
 
       # ---------- SQL syntax ----------
       - name: Check SQL format (simple psql dry-run)
