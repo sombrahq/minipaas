@@ -21,6 +21,20 @@ jobs:
   test:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v2
 
@@ -55,13 +69,18 @@ jobs:
 #          path: minipaas-role
 
       # ---------- SQL syntax ----------
-      - name: Check SQL format (simple psql dry-run)
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Validate SQL files
         run: |
-          sudo apt-get update && sudo apt-get install -y postgresql-client
           for f in minipaas-sql/*.sql; do
             echo "⏳ Validating $f ..."
-            cat "$f" | psql -v ON_ERROR_STOP=1 --dbname=postgres://postgres@localhost/postgres --no-password -f -
+            psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
           done
+        env:
+          PGPASSWORD: postgres
 
   ###########################################################################
   # BUILD minipaas-cli                                             #
