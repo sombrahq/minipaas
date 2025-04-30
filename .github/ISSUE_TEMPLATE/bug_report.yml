@@ -1,0 +1,22 @@
+name: Bug report
+description: File a reproducible bug
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve MiniPaaS!
+  - type: input
+    id: component
+    attributes: { label: Which MiniPaaS component }
+  - type: textarea
+    id: desc
+    attributes: { label: What happened?, placeholder: A clear description of the problem }
+    validations: { required: true }
+  - type: textarea
+    id: repro
+    attributes: { label: Steps to reproduce, placeholder: 1. … 2. … }
+  - type: input
+    id: version
+    attributes: { label: MiniPaaS version (`minipaas --version`) }

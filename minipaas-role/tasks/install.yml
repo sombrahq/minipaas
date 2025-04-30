@@ -1,0 +1,13 @@
+---
+- name: Install required system packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  loop:
+    - python3-pip
+    - virtualenv
+    - python3-setuptools
+    - python3-jsondiff
+    - python3-passlib
+    - python3-docker

@@ -1,0 +1,51 @@
+---
+- name: Set swarm-cronjob variables (for cronjob nodes)
+  ansible.builtin.set_fact:
+    # Choose appropriate architecture: use 'amd64' for x86_64, otherwise assume 'arm64'
+    swarm_cronjob_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+  when: is_main_manager
+
+- name: Download swarm-cronjob binary tarball (Only on Cronjob nodes)
+  ansible.builtin.get_url:
+    url: >-
+      https://github.com/crazy-max/swarm-cronjob/releases/download/v{{ swarm_cronjob_version }}/
+      swarm-cronjob_{{ swarm_cronjob_version }}_linux_{{ swarm_cronjob_arch }}.tar.gz
+    dest: "/tmp/swarm-cronjob.tar.gz"
+    mode: "0644"
+    owner: root
+    group: root
+  when: is_main_manager
+
+- name: Extract Swarm-Cronjob binary
+  ansible.builtin.unarchive:
+    src: "/tmp/swarm-cronjob.tar.gz"
+    dest: "/usr/local/bin"
+    remote_src: true
+    extra_opts: ["--strip-components=1"]
+    owner: root
+    group: root
+  when: is_main_manager
+
+- name: Ensure Swarm-Cronjob is executable
+  ansible.builtin.file:
+    path: "/usr/local/bin/swarm-cronjob"
+    owner: root
+    group: root
+    mode: "0755"
+  when: is_main_manager
+
+- name: Copy Swarm-Cronjob systemd service file
+  ansible.builtin.copy:
+    src: swarm-cronjob.service
+    dest: "/etc/systemd/system/swarm-cronjob.service"
+    owner: root
+    group: root
+    mode: "0644"
+  when: is_main_manager
+
+- name: Enable and start Swarm-Cronjob service
+  ansible.builtin.systemd:
+    name: swarm-cronjob
+    enabled: true
+    state: started
+  when: is_main_manager

@@ -1,0 +1,17 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "cloud-image/debian-12"
+
+  # Define the manager node.
+  config.vm.define "minipaas-manager1" do |manager|
+    manager.vm.hostname = "minipaas-manager1"
+    manager.vm.network "forwarded_port", guest: 80, host: 80
+    manager.vm.network "forwarded_port", guest: 2376, host: 2376
+  end
+
+  # Configure common provider settings for all VMs.
+  config.vm.provider "qemu" do |qemu|
+    qemu.memory = 2048
+    qemu.cpus = 1
+    qemu.display = "none"
+  end
+end

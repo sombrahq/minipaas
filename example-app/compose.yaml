@@ -1,0 +1,19 @@
+services:
+
+  example:
+    image: "example:latest"
+
+  example-worker:
+    image: "example:latest"
+    command: ["python", "-u", "queue_worker.py"]
+
+  example-consumer:
+    image: "example:latest"
+    command: ["python", "-u", "stream_consumer.py"]
+
+  example-cron:
+    image: "example:latest"
+    command: ["python", "-u", "cleanup.py"]
+
+  example-migration:
+    image: "example-migration:latest"

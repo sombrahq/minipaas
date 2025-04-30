@@ -1,0 +1,9 @@
+{
+  "hosts": ["unix:///var/run/docker.sock"],
+  "insecure-registries" : ["registry:5000"],
+  "log-driver": "syslog",
+  "log-opts": {
+    "syslog-address": "udp://127.0.0.1:514",
+    "tag": "minipaas-{{.Name}}"
+  }
+}

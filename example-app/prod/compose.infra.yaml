@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: "postgres:17.4"
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

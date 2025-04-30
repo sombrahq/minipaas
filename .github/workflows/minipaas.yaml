@@ -1,0 +1,197 @@
+name: MiniPaaS CLI
+
+# Trigger on version tags like v1.2.3  OR manually
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "*.*.*"
+  pull_request:
+  workflow_dispatch:
+env:
+  # Keep Go version in one place
+  GO_VERSION: '1.22'
+
+
+jobs:
+  ###########################################################################
+  # TEST JOB (runs once, covers all components)                             #
+  ###########################################################################
+  test:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v2
+
+      # ---------- CLI tests ----------
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install dependencies
+        run: go mod tidy
+        working-directory: minipaas-cli
+
+      - name: Run tests
+        run: go test ./... -v
+        working-directory: minipaas-cli
+
+      # ---------- Role lint ----------
+#      - name: Set up Python (for ansible-galaxy)
+#        uses: actions/setup-python@v5
+#        with:
+#          python-version: '3.x'
+#
+#      - name: Install Ansible Collections
+#        run: |
+#          pip install ansible-core
+#          ansible-galaxy collection install -r minipaas-role/requirements.yml
+#
+#      - name: Lint Ansible role
+#        uses: ansible/ansible-lint-action@v6
+#        with:
+#          path: minipaas-role
+
+      # ---------- SQL syntax ----------
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Validate SQL files
+        run: |
+          for f in minipaas-sql/*.sql; do
+            echo "⏳ Validating $f ..."
+            psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
+          done
+        env:
+          PGPASSWORD: postgres
+
+  ###########################################################################
+  # BUILD minipaas-cli                                             #
+  ###########################################################################
+  build-cli:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: ["386", amd64, arm64]
+        exclude:
+          - goarch: "386"
+            goos: darwin
+          - goarch: arm64
+            goos: windows
+        include:
+          - goos: darwin
+            os: macos-latest
+          - goos: linux
+            os: ubuntu-latest
+          - goos: windows
+            os: windows-latest
+            suffix: .exe
+    runs-on: ${{ matrix.os }}
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install dependencies
+        run: go mod tidy
+        working-directory: minipaas-cli
+
+      - name: Build
+        run: make -C minipaas-cli build WHAT=minipaas SUFFIX=${{ matrix.suffix }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: minipaas-cli/build/
+
+
+  ###########################################################################
+  # BUILD minipaas-sql                                                 #
+  ###########################################################################
+  build-sql:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: minipaas-sql
+          path: minipaas-sql/**
+
+  ###########################################################################
+  # CREATE GITHUB                                                           #
+  ###########################################################################
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-cli, build-sql]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux AMD64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-linux-amd64
+
+      - name: Download Windows AMD64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-windows-amd64
+
+      - name: Download Darwin AMD64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-darwin-amd64
+
+      - name: Download MiniPaaS SQL Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-sql
+
+      - name: Release MiniPaaS CLI
+        uses: softprops/action-gh-release@v2
+
+  ###########################################################################
+  # PUBLISH minipaas-role TO ANSIBLE GALAXY                                 #
+  ###########################################################################
+  publish-role:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ansible-core (ansible-galaxy CLI)
+        run: |
+          python -m pip install --upgrade pip
+          pip install "ansible-core>=2.15"     # ansible-galaxy comes with this
+
+      - name: Import MiniPaaS Role to Ansible Galaxy
+        env:
+          ANSIBLE_GALAXY_API_KEY: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
+        run: ansible-galaxy role import sombrahq_bot/minipaas-role

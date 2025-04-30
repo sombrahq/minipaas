@@ -1,0 +1,46 @@
+table inet filter {
+  chain input {
+    type filter hook input priority 0;
+    policy drop;
+
+    ct state established,related accept
+    iif "lo" accept
+
+    # Allow SSH
+    tcp dport 22 accept
+
+    # Allow Docker Swarm ports
+    tcp dport 7946 accept       # Node-to-node TCP
+    udp dport 7946 accept       # Node-to-node UDP
+    udp dport 4789 accept       # Overlay network
+
+    {% if is_manager %}
+    # Managers ports
+    tcp dport 2377 accept
+    tcp dport {80, 443} accept
+    {% endif %}
+
+    # Managers ports
+    {% for port in minipaas_extra_ports %}
+    tcp dport {{ port }} accept
+    {% endfor %}
+
+    # Allow localhost to send to UDP port 514
+    ip saddr 127.0.0.1 udp dport 514 accept
+
+    # Drop all other traffic to UDP port 514
+    udp dport 514 drop
+
+
+  }
+
+  chain forward {
+    type filter hook forward priority 0;
+    policy accept;
+  }
+
+  chain output {
+    type filter hook output priority 0;
+    policy accept;
+  }
+}

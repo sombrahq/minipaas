@@ -1,0 +1,61 @@
+### Records Resource
+
+GET http://example.local/records
+Content-Type: application/json
+
+###
+
+POST http://example.local/records
+Content-Type: application/json
+
+{
+  "data": "This is a sample record"
+}
+
+
+### Queue Resource
+
+GET http://example.local/queue
+Content-Type: application/json
+
+###
+
+POST http://example.local/queue
+Content-Type: application/json
+
+{
+  "payload": {
+    "task": "run backup",
+    "priority": "high"
+  }
+}
+
+
+### Stream Resource
+
+GET http://example.local/stream
+Content-Type: application/json
+
+###
+
+POST http://example.local/stream
+Content-Type: application/json
+
+{
+  "event": {
+    "action": "update",
+    "detail": "Event example"
+  }
+}
+
+
+### Consumers Resource
+
+GET http://example.local/consumers
+Content-Type: application/json
+
+
+### Errors
+
+POST http://example.local/error/500
+Content-Type: application/json

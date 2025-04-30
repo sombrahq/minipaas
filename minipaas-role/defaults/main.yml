@@ -1,0 +1,23 @@
+---
+# Docker
+docker_tls_dir: ".certs"
+
+# Swarm tools
+swarm_cronjob_version: "1.14.0"
+
+# Telegram
+telegram_bot_token: "{{ lookup('env', 'TELEGRAM_TOKEN') }}"
+telegram_chat_id: "{{ lookup('env', 'TELEGRAM_CHAT') }}"
+
+# Firewall
+minipaas_extra_ports: []
+
+minipaas_runtime_enabled: true
+
+# MiniPaaS Caddy
+minipaas_caddy_enabled: true
+caddy_image_tag: "2.9.1-alpine"
+
+# MiniPaaS Registry
+minipaas_registry_enabled: true
+minipaas_registry_image_tag: "2"

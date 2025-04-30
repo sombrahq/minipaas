@@ -1,0 +1,13 @@
+---
+
+- name: Copy custom docker.service file
+  ansible.builtin.copy:
+    src: docker.service
+    dest: /etc/systemd/system/docker.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install Docker
+  ansible.builtin.include_role:
+    name: geerlingguy.docker

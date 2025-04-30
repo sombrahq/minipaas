@@ -1,0 +1,7 @@
+{
+	debug
+    admin localhost:2019
+    log {
+        output stdout
+    }
+}

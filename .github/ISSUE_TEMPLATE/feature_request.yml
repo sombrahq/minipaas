@@ -1,0 +1,9 @@
+name: Feature request
+labels: [enhancement]
+body:
+  - type: textarea
+    id: prob
+    attributes: { label: Problem, placeholder: As a <person> I want ... so that ... }
+  - type: textarea
+    id: proposal
+    attributes: { label: Possible solution }

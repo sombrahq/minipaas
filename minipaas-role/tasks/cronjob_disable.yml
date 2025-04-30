@@ -1,0 +1,20 @@
+---
+
+- name: Enable and start Swarm-Cronjob service
+  ansible.builtin.systemd:
+    name: swarm-cronjob
+    enabled: true
+    state: stopped
+  when: not is_main_manager
+
+- name: Remove Swarm-Cronjob systemd service file on non-cronjob hosts
+  ansible.builtin.file:
+    path: /etc/systemd/system/swarm-cronjob.service
+    state: absent
+  when: not is_main_manager
+
+- name: Remove Swarm-Cronjob binary on non-cronjob hosts
+  ansible.builtin.file:
+    path: /usr/local/bin/swarm-cronjob
+    state: absent
+  when: not is_main_manager

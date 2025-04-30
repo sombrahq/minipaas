@@ -1,0 +1,28 @@
+---
+- name: Ensure Docker directory exists
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: not install_certificates
+
+- name: Remove TLS certificates if they exist (non-API hosts)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/docker/ca.pem
+    - /etc/docker/server-cert.pem
+    - /etc/docker/server-key.pem
+  when: not install_certificates
+
+- name: Configure Docker API for TLS on API nodes
+  ansible.builtin.copy:
+    src: daemon_common.json
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  when: not install_certificates
