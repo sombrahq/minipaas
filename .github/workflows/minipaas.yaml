@@ -1,6 +1,5 @@
-name: MiniPaaS CLI
+name: MiniPaaS
 
-# Trigger on version tags like v1.2.3  OR manually
 on:
   push:
     branches:
@@ -36,7 +35,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # ---------- CLI tests ----------
       - name: Set up Go
@@ -86,7 +85,7 @@ jobs:
   # BUILD minipaas-cli                                             #
   ###########################################################################
   build-cli:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/')
     needs: test
     strategy:
       matrix:
@@ -133,7 +132,7 @@ jobs:
   # BUILD minipaas-sql                                                 #
   ###########################################################################
   build-sql:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/')
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -148,7 +147,7 @@ jobs:
   # CREATE GITHUB                                                           #
   ###########################################################################
   release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/')
     needs: [build-cli, build-sql]
     runs-on: ubuntu-latest
     steps:
@@ -179,7 +178,7 @@ jobs:
   # PUBLISH minipaas-role TO ANSIBLE GALAXY                                 #
   ###########################################################################
   publish-role:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/')
     needs: release
     runs-on: ubuntu-latest
     steps:
