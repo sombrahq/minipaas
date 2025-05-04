@@ -61,11 +61,14 @@ jobs:
       - name: Build CLI
         run: make -C minipaas-cli build WHAT=minipaas
 
+      - name: List files
+        run: ls -la minipaas-cli
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: minipaas-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}
-          path: minipaas-cli/build/minipaas
+          name: minipaas-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: minipaas-cli/build/minipaas*
 
   build-sql:
     runs-on: ubuntu-latest
