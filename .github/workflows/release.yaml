@@ -79,7 +79,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [build-cli, build-sql]
+    needs: [build-cli, build-sql, build-role]
     permissions:
       contents: write
     steps:
@@ -95,6 +95,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: minipaas-sql
+          path: ./release-artifacts
+
+      - name: Download Ansible Role Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-role
           path: ./release-artifacts
 
       - name: Release on GitHub
