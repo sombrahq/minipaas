@@ -54,10 +54,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/upload-artifact@v4
         with:
           name: minipaas-sql
-          path: minipaas-sql/**
+          path: minipaas-sql/*.sql
 
   release:
     runs-on: ubuntu-latest
@@ -65,50 +66,24 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download Darwin AMD64 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: minipaas-darwin-amd64
 
-      - name: Download Darwin ARM64 Artifacts
+      - name: Download CLI artifacts
         uses: actions/download-artifact@v4
         with:
-          name: minipaas-darwin-arm64
-
-      - name: Download Linux 386 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: minipaas-linux-386
-
-      - name: Download Linux AMD64 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: minipaas-linux-amd64
-
-      - name: Download Linux ARM64 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: minipaas-linux-arm64
-
-      - name: Download Windows 386 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: minipaas-windows-386.exe
-
-      - name: Download Windows AMD64 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: minipaas-windows-amd64.exe
+          path: ./release-artifacts
+          pattern: minipaas-*
+          merge-multiple: true
 
       - name: Download SQL Artifacts
         uses: actions/download-artifact@v4
         with:
           name: minipaas-sql
+          path: ./release-artifacts
 
       - name: Release on GitHub
         uses: softprops/action-gh-release@v2
         with:
-          files: minipaas*
+          files: ./release-artifacts/*
 
   publish-role:
     runs-on: ubuntu-latest
@@ -124,4 +99,4 @@ jobs:
       - name: Publish to Ansible Galaxy
         env:
           ANSIBLE_GALAXY_API_KEY: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
-        run: ansible-galaxy role import sombrahq_bot/minipaas-role
+        run: ansible-galaxy role import sombrahq_bot minipaas-role
