@@ -1,0 +1,61 @@
+name: MiniPaaS CI
+
+on:
+  pull_request:
+  push:
+    paths:
+      - 'minipaas-cli/**'
+      - 'minipaas-role/**'
+      - 'minipaas-sql/**'
+      - '.github/workflows/**'
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.22'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install dependencies
+        run: go mod tidy
+        working-directory: minipaas-cli
+
+      - name: Run Go tests
+        run: go test ./... -v
+        working-directory: minipaas-cli
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Validate SQL files
+        run: |
+          for f in minipaas-sql/*.sql; do
+            echo "⏳ Validating $f ..."
+            psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$f"
+          done
+        env:
+          PGPASSWORD: postgres
