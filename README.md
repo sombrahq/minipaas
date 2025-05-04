@@ -87,6 +87,16 @@ worker2  ansible_host=192.0.2.12 ansible_user=root
 
 ---
 
+## Installing
+
+You can install the role directly from the GitHub Release artifact.
+
+### Example
+
+```bash
+ansible-galaxy role install https://github.com/sombrahq/minipaas/releases/download/vX.Y.Z/minipaas-role.tar.gz
+```
+
 ### Minimal playbook (`install.yml`)
 
 ```yaml
@@ -95,8 +105,13 @@ worker2  ansible_host=192.0.2.12 ansible_user=root
   become: yes
 
   roles:
-    - minipaas-role            # <-- relative or Galaxy install name
+    - minipaas-role
 ```
+
+Currently, the MiniPaaS Ansible role is distributed via GitHub Releases.  
+It is not published to Ansible Galaxy.
+
+To use it, download and install the release artifact as shown above.
 
 ---
 
