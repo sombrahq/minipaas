@@ -44,20 +44,29 @@ jobs:
       - name: Build CLI
         run: make -C minipaas-cli build WHAT=minipaas SUFFIX=${{ matrix.suffix }}
 
+      - name: List built files
+        run: ls -la minipaas-cli/build/
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: minipaas-cli/build/
+          name: minipaas-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}
+          path: minipaas-cli/build/minipaas${{ matrix.suffix }}
 
   build-sql:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Zip minipaas-sql directory
+        run: |
+          cd minipaas-sql
+          zip -r ../minipaas-sql.zip .
+
       - uses: actions/upload-artifact@v4
         with:
-          name: minipaas-sql
-          path: minipaas-sql/**
+          name: minipaas-sql.zip
+          path: minipaas-sql.zip
 
   release:
     runs-on: ubuntu-latest
@@ -65,28 +74,50 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Download Darwin AMD64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-darwin-amd64
+
+      - name: Download Darwin ARM64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-darwin-arm64
+
+      - name: Download Linux 386 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-linux-386
+
       - name: Download Linux AMD64 Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-linux-amd64
+          name: minipaas-linux-amd64
+
+      - name: Download Linux ARM64 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-linux-arm64
+
+      - name: Download Windows 386 Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: minipaas-windows-386.exe
 
       - name: Download Windows AMD64 Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts-windows-amd64
-
-      - name: Download Darwin AMD64 Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts-darwin-amd64
+          name: minipaas-windows-amd64.exe
 
       - name: Download SQL Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: minipaas-sql
+          name: minipaas-sql.zip
 
       - name: Release on GitHub
         uses: softprops/action-gh-release@v2
+        with:
+          files: minipaas*
 
   publish-role:
     runs-on: ubuntu-latest
