@@ -42,31 +42,22 @@ jobs:
         working-directory: minipaas-cli
 
       - name: Build CLI
-        run: make -C minipaas-cli build WHAT=minipaas SUFFIX=${{ matrix.suffix }}
-
-      - name: List built files
-        run: ls -la minipaas-cli/build/
+        run: make -C minipaas-cli build WHAT=minipaas
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: minipaas-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}
-          path: minipaas-cli/build/minipaas${{ matrix.suffix }}
+          path: minipaas-cli/build/minipaas
 
   build-sql:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Zip minipaas-sql directory
-        run: |
-          cd minipaas-sql
-          zip -r ../minipaas-sql.zip .
-
       - uses: actions/upload-artifact@v4
         with:
-          name: minipaas-sql.zip
-          path: minipaas-sql.zip
+          name: minipaas-sql
+          path: minipaas-sql/**
 
   release:
     runs-on: ubuntu-latest
@@ -112,7 +103,7 @@ jobs:
       - name: Download SQL Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: minipaas-sql.zip
+          name: minipaas-sql
 
       - name: Release on GitHub
         uses: softprops/action-gh-release@v2
