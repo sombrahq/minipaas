@@ -6,14 +6,16 @@ BUILD_DIR := build
 
 # Build targets
 WHAT ?= minipaas
-SUFFIX ?= "-$(GOOS)-$(GOARCH)$(SUFFIX)"
+SUFFIX ?= $(if $(findstring windows,$(GOOS)),.exe,)
+
+OUTPUT ?= $(WHAT)-$(GOOS)-$(GOARCH)$(SUFFIX)
 
 .PHONY: build
 build:
 	@mkdir -p $(BUILD_DIR)
 	@for target in $(WHAT); do \
-		fn="$(BUILD_DIR)/$$target"; \
+		fn="$(BUILD_DIR)/$(OUTPUT)"; \
 		echo "Building $$fn..."; \
-		go build -ldflags="-extldflags -static -X main.Version=$(VERSION)" -o $$fn ./cmd/$$target; \
+		GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-extldflags -static -X main.Version=$(VERSION)" -o $$fn ./cmd/$$target; \
 	done
 	@echo "Build complete."

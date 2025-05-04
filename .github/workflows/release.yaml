@@ -9,6 +9,23 @@ env:
   GO_VERSION: '1.22'
 
 jobs:
+
+  build-role:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Ansible Role Tarball
+        run: |
+          cd minipaas-role
+          tar -czf ../minipaas-role.tar.gz *
+
+      - name: Upload Ansible Role Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: minipaas-role
+          path: minipaas-role.tar.gz
+
   build-cli:
     runs-on: ubuntu-latest
     strategy:
@@ -84,19 +101,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ./release-artifacts/*
-
-  publish-role:
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Ansible Galaxy CLI
-        run: |
-          python -m pip install --upgrade pip
-          pip install "ansible-core>=2.15"
-
-      - name: Publish to Ansible Galaxy
-        env:
-          ANSIBLE_GALAXY_API_KEY: ${{ secrets.ANSIBLE_GALAXY_TOKEN }}
-        run: ansible-galaxy role import sombrahq_bot minipaas-role
