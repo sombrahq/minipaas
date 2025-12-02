@@ -146,6 +146,17 @@ ansible-playbook -i inventory.ini install.yml
 ### Purpose
 A single binary that drives Docker Swarm operations over TLS and augments Compose files with Swarm best practices.
 
+### Installation
+
+``minipaas-cli`` is distributed as a single binary, so you can install it anywhere.
+
+```bash
+go install github.com/sombrahq/minipaas/minipaas-cli/cmd/minipaas@main
+```
+
+> **Tip:** you can also download the latest release from the [Releases page](https://github.com/sombrahq/minipaas/releases).
+
+
 ### Features
 * Secrets & Configs: create, delete, prune, auto-inject into Compose.
 * Code generators: exposed services, workers, cron jobs, one-off jobs.
