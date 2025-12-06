@@ -6,7 +6,8 @@ on:
       - "*.*.*"
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.24'
+  PY_VERSION: '3.x'
 
 jobs:
 
@@ -80,13 +81,31 @@ jobs:
           name: minipaas-sql
           path: minipaas-sql/*.sql
 
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PY_VERSION }}
+
+      - name: Build docs
+        run: make build-docs
+
+      - name: Upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
   release:
     runs-on: ubuntu-latest
-    needs: [build-cli, build-sql, build-role]
+    needs: [build-cli, build-sql, build-role, build-docs]
     permissions:
       contents: write
     steps:
-
       - name: Download CLI artifacts
         uses: actions/download-artifact@v4
         with:
@@ -110,3 +129,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ./release-artifacts/*
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: [ release ]
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

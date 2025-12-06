@@ -1,26 +1,22 @@
 ### Records Resource
 
-GET http://example.local/records
-Content-Type: application/json
-
-###
-
-POST http://example.local/records
+POST http://localhost:8000/records
 Content-Type: application/json
 
 {
   "data": "This is a sample record"
 }
 
+###
+
+GET http://localhost:8000/records
+Content-Type: application/json
+
 
 ### Queue Resource
 
-GET http://example.local/queue
-Content-Type: application/json
 
-###
-
-POST http://example.local/queue
+POST http://localhost:8000/queue
 Content-Type: application/json
 
 {
@@ -30,15 +26,16 @@ Content-Type: application/json
   }
 }
 
+###
+
+GET http://localhost:8000/queue
+Content-Type: application/json
+
 
 ### Stream Resource
 
-GET http://example.local/stream
-Content-Type: application/json
 
-###
-
-POST http://example.local/stream
+POST http://localhost:8000/stream
 Content-Type: application/json
 
 {
@@ -48,14 +45,18 @@ Content-Type: application/json
   }
 }
 
+###
+
+GET http://localhost:8000/stream
+Content-Type: application/json
 
 ### Consumers Resource
 
-GET http://example.local/consumers
+GET http://localhost:8000/consumers
 Content-Type: application/json
 
 
 ### Errors
 
-POST http://example.local/error/500
+POST http://localhost:8000/error/500
 Content-Type: application/json

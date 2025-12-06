@@ -1,0 +1,9 @@
+networks:
+  minipaas_network:
+    driver: overlay
+    attachable: true
+    internal: true
+
+  minipaas_public:
+    driver: overlay
+    attachable: true

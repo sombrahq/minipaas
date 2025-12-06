@@ -2,3 +2,7 @@
 build
 var
 .vagrant
+.gocache/
+.gopath/
+.cache
+coverage.out

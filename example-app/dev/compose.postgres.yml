@@ -1,0 +1,36 @@
+services:
+  postgres:
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 0
+        delay: 10s
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 10s
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    image: postgres:17.4
+    networks:
+      minipaas_network: {}
+    secrets:
+      - source: postgres_password.267da420
+        target: postgres_password
+    volumes:
+      - type: volume
+        source: postgres_data
+        target: /var/lib/postgresql/data
+        volume: {}
+volumes:
+  postgres_data:
+    name: minipaas_postgres_data
+secrets:
+  postgres_password.267da420:
+    external: true

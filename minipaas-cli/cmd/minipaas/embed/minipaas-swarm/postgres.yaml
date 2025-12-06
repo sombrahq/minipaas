@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: "postgres:${POSTGRES_IMAGE_TAG:-17.4}"
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 0
+        delay: 10s
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 10s
+    networks:
+      minipaas_network: {}
+
+
+volumes:
+  postgres_data:

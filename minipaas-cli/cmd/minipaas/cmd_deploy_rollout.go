@@ -15,7 +15,7 @@ func (args *DeployRolloutArgs) Run() {
 	setApiEnvVars(args.Env, cfg, args.Verbose)
 
 	composeFiles := cfg.Project.Files
-	composeFiles = append(composeFiles, filepath.Join(args.Env, deployFile))
+	composeFiles = append(composeFiles, filepath.Join(args.Env, appsFile))
 
 	var files []string
 	for _, fn := range composeFiles {

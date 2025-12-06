@@ -45,8 +45,6 @@
   ansible.builtin.import_tasks: docker.yml
 - name: Setup Swarm managers
   ansible.builtin.import_tasks: swarm_managers.yml
-- name: Configure Swarm operations
-  ansible.builtin.import_tasks: swarm_ops.yml
 - name: Setup Swarm workers
   ansible.builtin.import_tasks: swarm_workers.yml
 
@@ -55,7 +53,3 @@
   ansible.builtin.import_tasks: cronjob.yml
 - name: Disable unused cron jobs
   ansible.builtin.import_tasks: cronjob_disable.yml
-
-# PaaS
-- name: Deploy MiniPaaS
-  ansible.builtin.import_tasks: deploy.yml

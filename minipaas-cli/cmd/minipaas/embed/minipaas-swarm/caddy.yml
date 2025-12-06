@@ -1,0 +1,45 @@
+services:
+  caddy:
+    image: "caddy:${CADDY_IMAGE_TAG:-2.9.1-alpine}"
+    command: ["caddy", "run", "--resume"]
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - minipaas_network
+      - minipaas_public
+    ports:
+      - target: 8000
+        published: 8000
+        mode: host
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- --spider http://127.0.0.1:2019/config
+      timeout: 10s
+      interval: 10s
+      retries: 5
+      start_period: 10s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+
+volumes:
+  caddy_data:
+  caddy_config:
+

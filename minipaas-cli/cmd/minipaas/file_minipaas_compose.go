@@ -3,15 +3,130 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/compose-spec/compose-go/v2/cli"
-	"github.com/compose-spec/compose-go/v2/types"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/compose-spec/compose-go/v2/cli"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
-const deployFile = "compose.minipaas.yaml"
+const appsFile = "compose.apps.yaml"
+
+// loadComposeFile loads a single compose file at the provided path, applying
+// the same normalization as loadProject (e.g. removing default networks).
+func loadComposeFile(file string) (*types.Project, string, error) {
+	ctx := context.Background()
+
+	options, err := cli.NewProjectOptions(
+		[]string{file},
+		// Keep behavior consistent with loadProject regarding env resolution
+		cli.WithEnv([]string{"MINIPAAS_DEPLOY_VERSION=${MINIPAAS_DEPLOY_VERSION}"}),
+		cli.WithName("minipaas"),
+		cli.WithResolvedPaths(false),
+		cli.WithConsistency(false),
+		cli.WithoutEnvironmentResolution,
+	)
+	if err != nil {
+		return nil, file, err
+	}
+
+	project, err := options.LoadProject(ctx)
+	if err != nil {
+		return nil, file, err
+	}
+
+	if project.Networks != nil {
+		if _, ok := project.Networks["default"]; ok {
+			delete(project.Networks, "default")
+		}
+	}
+
+	for name, svc := range project.Services {
+		if svc.Networks != nil {
+			if _, exists := svc.Networks["default"]; exists {
+				delete(svc.Networks, "default")
+				project.Services[name] = svc
+			}
+		}
+	}
+
+	return project, file, nil
+}
+
+// saveComposeFile marshals and writes the project content to the given file path.
+func saveComposeFile(file string, project *types.Project) (string, error) {
+	project.Name = ""
+	data, err := project.MarshalYAML()
+	if err != nil {
+		return file, err
+	}
+	return file, os.WriteFile(file, data, 0644)
+}
+
+// composeFilesForEnv returns the list of compose files to consider for an env,
+// ordered with the env apps file first, followed by the files from cfg.Project.Files
+// that are located under the env directory. The order in cfg.Project.Files is preserved.
+func composeFilesForEnv(env string, cfg Config) []string {
+	var ordered []string
+
+	envPrefix := filepath.Clean(env) + string(os.PathSeparator)
+	envAbs, _ := filepath.Abs(env)
+	envAbsPrefix := envAbs + string(os.PathSeparator)
+
+	for _, f := range cfg.Project.Files {
+		cleaned := filepath.Clean(f)
+
+		// Include only files located under env dir.
+		include := false
+		if filepath.IsAbs(cleaned) {
+			if strings.HasPrefix(cleaned, envAbsPrefix) {
+				include = true
+			}
+		} else {
+			if strings.HasPrefix(cleaned, envPrefix) {
+				include = true
+			}
+		}
+		if !include {
+			continue
+		}
+
+		ordered = append(ordered, f)
+	}
+
+	return ordered
+}
+
+// groupServicesByComposeFile returns a mapping from compose file path to the
+// subset of services that belong in that file, plus a list of any services that
+// could not be found in any provided compose file.
+func groupServicesByComposeFile(files []string, services []string) (map[string][]string, []string) {
+	svcPerFile := map[string][]string{}
+	var missing []string
+
+	for _, s := range services {
+		found := false
+		for _, file := range files {
+			project, _, err := loadComposeFile(file)
+			if err != nil {
+				// Skip unreadable files; continue to next
+				continue
+			}
+			if _, ok := project.Services[s]; ok {
+				svcPerFile[file] = append(svcPerFile[file], s)
+				found = true
+				break
+			}
+		}
+		if !found {
+			missing = append(missing, s)
+		}
+	}
+
+	return svcPerFile, missing
+}
 
 func createDeployService(svc types.ServiceConfig, requiresBuild bool) types.ServiceConfig {
 	srv := types.ServiceConfig{
@@ -35,7 +150,7 @@ func composeEnsureDeploy(project *types.Project, serviceName string) {
 
 func loadProject(env string) (*types.Project, string, error) {
 	ctx := context.Background()
-	fn := filepath.Join(env, deployFile)
+	fn := filepath.Join(env, appsFile)
 
 	options, err := cli.NewProjectOptions(
 		[]string{fn},
@@ -74,7 +189,7 @@ func loadProject(env string) (*types.Project, string, error) {
 }
 
 func saveProject(env string, project *types.Project) (string, error) {
-	fn := filepath.Join(env, deployFile)
+	fn := filepath.Join(env, appsFile)
 
 	project.Name = ""
 	data, err := project.MarshalYAML()
@@ -101,11 +216,6 @@ func buildCommonImage(image string) string {
 func buildDeployProject() *types.Project {
 	return &types.Project{
 		Services: make(types.Services),
-		Networks: types.Networks{
-			"minipaas_network": types.NetworkConfig{
-				External: true,
-			},
-		},
 	}
 }
 

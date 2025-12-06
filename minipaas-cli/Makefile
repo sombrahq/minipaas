@@ -19,3 +19,16 @@ build:
 		GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-extldflags -static -X main.Version=$(VERSION)" -o $$fn ./cmd/$$target; \
 	done
 	@echo "Build complete."
+
+
+.PHONY: fmt
+fmt:
+	@go fmt github.com/sombrahq/minipaas/minipaas-cli/...
+
+
+PHONY: test
+test:
+	@go test --cover -parallel=1 -v -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out | sort -rnk3
+
+

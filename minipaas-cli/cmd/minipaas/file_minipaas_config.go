@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/goccy/go-yaml"
 	"os"
 	"path/filepath"
+
+	"github.com/goccy/go-yaml"
 )
 
 type ProjectConfig struct {
@@ -12,8 +13,9 @@ type ProjectConfig struct {
 }
 
 type ApiConfig struct {
-	Host  string `yaml:"host"`
-	Certs string `yaml:"tls"`
+	Host  string `yaml:"host,omitempty"`
+	Certs string `yaml:"tls,omitempty"`
+	Local bool   `yaml:"local,omitempty"`
 }
 
 type DeployConfig struct {
@@ -52,18 +54,31 @@ func saveConfig(env string, cfg Config) (string, error) {
 }
 
 func setApiEnvVars(env string, cfg Config, verbose bool) {
-	certsPath := filepath.Join(env, cfg.Api.Certs)
+	// Local mode: use default Docker socket, no TLS envs
 	if verbose {
-		fmt.Printf("🔹 Environment variables set:\n"+
-			"   DOCKER_CERT_PATH=%s\n"+
-			"   DOCKER_HOST=%s\n"+
-			"   DOCKER_TLS_VERIFY=1\n"+
-			"   MINIPAAS_DEPLOY_VERSION=%s\n",
-			certsPath, cfg.Api.Host, cfg.Deploy.Version)
+		fmt.Printf("🔹 Environment:\n"+
+			"   MINIPAAS_DEPLOY_VERSION=%s\n", cfg.Deploy.Version)
+	}
+	os.Setenv("MINIPAAS_DEPLOY_VERSION", cfg.Deploy.Version)
+
+	if cfg.Api.Local {
+		return
 	}
 
+	// TLS mode (default for remote Docker APIs)
+	certsPath := filepath.Join(env, cfg.Api.Certs)
 	os.Setenv("DOCKER_CERT_PATH", certsPath)
 	os.Setenv("DOCKER_HOST", cfg.Api.Host)
 	os.Setenv("DOCKER_TLS_VERIFY", "1")
 	os.Setenv("MINIPAAS_DEPLOY_VERSION", cfg.Deploy.Version)
+
+	if verbose {
+		fmt.Printf(
+			"   DOCKER_CERT_PATH=%s\n"+
+				"   DOCKER_HOST=%s\n"+
+				"   DOCKER_TLS_VERIFY=1\n"+
+				"   MINIPAAS_DEPLOY_VERSION=%s\n",
+			certsPath, cfg.Api.Host, cfg.Deploy.Version)
+	}
+
 }
