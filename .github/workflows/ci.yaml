@@ -14,7 +14,7 @@ on:
 
 env:
   GO_VERSION: '1.24'
-  PY_VERSION: '3.x'
+  PY_VERSION: '3.14'
 
 jobs:
   test:
@@ -74,7 +74,7 @@ jobs:
       - name: Install system dependencies for Pillow
         run: |
           sudo apt-get update
-          sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev
+          sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev
 
       - name: Validate docs
         run: make build-docs
