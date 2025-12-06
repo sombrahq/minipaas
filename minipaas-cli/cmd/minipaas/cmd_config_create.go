@@ -1,14 +1,11 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -44,51 +41,35 @@ func (args *ConfigCreateArgs) Run() {
 		return
 	}
 
-	configCreateAndStore(args.Env, baseName, content, args.For, args.Verbose)
-}
+	env := args.Env
+	service := args.For
+	verbose := args.Verbose
 
-func configCreateAndStore(env, baseName string, content []byte, service []string, verbose bool) {
-	configName, err := createConfig(baseName, content, verbose)
+	configName, err := configCreate(baseName, content, verbose)
 	checkErrorPanic(err, fmt.Sprintf("❌ Failed to create config for input: %s", baseName))
 	fmt.Printf("✅ Config created: %s\n", configName)
 
-	deployProject, composeFile, err := loadProject(env)
-	checkErrorPanic(err, fmt.Sprintf("❌ Failed to load compose file: %s", composeFile))
+	// Load project config to discover compose files in env
+	cfg, _, err = loadConfig(env)
+	checkErrorPanic(err, "❌ Failed to load MiniPaaS configuration")
+	orderedFiles := composeFilesForEnv(env, cfg)
 
-	err = addComposeConfig(deployProject, configName, baseName, service)
-	checkErrorPanic(err, fmt.Sprintf("❌ Failed to update compose: %s", composeFile))
-
-	composeFile, err = saveProject(env, deployProject)
-	checkErrorPanic(err, fmt.Sprintf("❌ Failed to update compose file: %s", composeFile))
-	fmt.Printf("✅ Updated deploy file with config: %s\n", configName)
-}
-
-func configExists(name string) bool {
-	cmd := exec.Command("docker", "config", "inspect", name)
-	return cmd.Run() == nil
-}
-
-func createConfig(baseName string, config []byte, verbose bool) (string, error) {
-	hash := sha256.Sum256(config)
-	hashPrefix := hex.EncodeToString(hash[:])[:8]
-
-	configName := fmt.Sprintf("%s.%s", baseName, hashPrefix)
-
-	return configName, createLiteralConfig(configName, config, verbose)
-}
-
-func createLiteralConfig(configName string, config []byte, verbose bool) error {
-	if configExists(configName) {
-		return nil
+	// Group services by owning compose file
+	svcPerFile, missing := groupServicesByComposeFile(orderedFiles, service)
+	if len(missing) > 0 {
+		checkErrorPanic(fmt.Errorf("services not found: %v", missing), "❌ Failed to find services in compose files")
 	}
 
-	return runCommandWithInput([]string{"docker", "config", "create", configName, "-"}, config, verbose)
-}
+	// Patch each compose file
+	for file, svcs := range svcPerFile {
+		project, _, lerr := loadComposeFile(file)
+		checkErrorPanic(lerr, fmt.Sprintf("❌ Failed to load compose file: %s", file))
 
-func createLock(configName string, verbose bool) error {
-	if configExists(configName) {
-		return fmt.Errorf("❌ Failed to acquire %s lock", configName)
+		lerr = addComposeConfig(project, configName, baseName, svcs)
+		checkErrorPanic(lerr, fmt.Sprintf("❌ Failed to update compose: %s", file))
+
+		_, lerr = saveComposeFile(file, project)
+		checkErrorPanic(lerr, fmt.Sprintf("❌ Failed to update compose file: %s", file))
+		fmt.Printf("✅ Updated compose file with config: %s\n", file)
 	}
-
-	return runCommandWithInput([]string{"docker", "config", "create", configName, "-"}, []byte("lock"), verbose)
 }

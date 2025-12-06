@@ -1,14 +1,11 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -44,43 +41,37 @@ func (args *SecretCreateArgs) Run() {
 		return
 	}
 
-	secretCreateAndStore(args.Env, baseName, content, args.For, args.Verbose)
-}
+	env := args.Env
+	service := args.For
+	verbose := args.Verbose
 
-func secretCreateAndStore(env, baseName string, content []byte, service []string, verbose bool) {
 	secretName, err := secretCreate(baseName, content, verbose)
 	checkErrorPanic(err, fmt.Sprintf("❌ Error creating secret for input: %s", baseName))
 	fmt.Printf("✅ Secret created: %s\n", secretName)
 
-	deployProject, composeFile, err := loadProject(env)
-	checkErrorPanic(err, fmt.Sprintf("❌ Failed to load deploy file: %s", composeFile))
+	// Load project config to discover all compose files
+	cfg, _, err = loadConfig(env)
+	checkErrorPanic(err, "❌ Failed to load MiniPaaS configuration")
 
-	err = addComposeSecret(deployProject, secretName, baseName, service)
-	checkErrorPanic(err, fmt.Sprintf("❌ Failed to update compose: %s", composeFile))
+	// Determine compose files to scan and patch
+	orderedFiles := composeFilesForEnv(env, cfg)
 
-	composeFile, err = saveProject(env, deployProject)
-	checkErrorPanic(err, fmt.Sprintf("❌ Failed to update compose file: %s", composeFile))
-	fmt.Printf("✅ Updated compose file with secret: %s\n", composeFile)
-}
-
-func secretExists(name string) bool {
-	cmd := exec.Command("docker", "secret", "inspect", name)
-	return cmd.Run() == nil
-}
-
-func secretCreate(baseName string, secret []byte, verbose bool) (string, error) {
-	hash := sha256.Sum256(secret)
-	hashPrefix := hex.EncodeToString(hash[:])[:8]
-
-	secretName := fmt.Sprintf("%s.%s", baseName, hashPrefix)
-
-	return secretName, createLiteralSecret(secretName, secret, verbose)
-}
-
-func createLiteralSecret(secretName string, secret []byte, verbose bool) error {
-	if secretExists(secretName) {
-		return nil
+	// Group services by owning compose file
+	svcPerFile, missing := groupServicesByComposeFile(orderedFiles, service)
+	if len(missing) > 0 {
+		checkErrorPanic(fmt.Errorf("services not found: %v", missing), "❌ Failed to find services in compose files")
 	}
 
-	return runCommandWithInput([]string{"docker", "secret", "create", secretName, "-"}, secret, verbose)
+	// Patch each compose file that owns at least one target service
+	for file, svcs := range svcPerFile {
+		project, _, lerr := loadComposeFile(file)
+		checkErrorPanic(lerr, fmt.Sprintf("❌ Failed to load compose file: %s", file))
+
+		lerr = addComposeSecret(project, secretName, baseName, svcs)
+		checkErrorPanic(lerr, fmt.Sprintf("❌ Failed to update compose: %s", file))
+
+		_, lerr = saveComposeFile(file, project)
+		checkErrorPanic(lerr, fmt.Sprintf("❌ Failed to update compose file: %s", file))
+		fmt.Printf("✅ Updated compose file with secret: %s\n", file)
+	}
 }

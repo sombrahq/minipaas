@@ -1,0 +1,2 @@
+-include $(wildcard mk/*.mk)
+

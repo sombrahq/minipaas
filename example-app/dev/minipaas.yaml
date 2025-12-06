@@ -1,0 +1,13 @@
+project:
+  files:
+  - compose.yaml
+  - compose.build.yaml
+  - dev/compose.common.yml
+  - dev/compose.apps.yaml
+  - dev/compose.registry.yml
+  - dev/compose.postgres.yml
+  - dev/compose.caddy.yml
+api:
+  local: true
+deploy:
+  version: 0.1.0

@@ -6,14 +6,18 @@ import (
 	"strings"
 )
 
+// indirection for testability
+var _runCommand = runCommand
+var _runCommandOutput = runCommandOutput
+
 func dockerContainerExec(containerID string, args []string, verbose bool) error {
 	allArgs := append([]string{"docker", "exec", "-i", containerID}, args...)
-	return runCommand(allArgs, verbose)
+	return _runCommand(allArgs, verbose)
 }
 
 func dockerContainerExecOutput(containerID string, args []string, verbose bool) (string, error) {
 	allArgs := append([]string{"docker", "exec", "-i", containerID}, args...)
-	return runCommandOutput(allArgs, verbose)
+	return _runCommandOutput(allArgs, verbose)
 }
 
 func getContainerID(serviceName string) (string, error) {
@@ -22,7 +26,7 @@ func getContainerID(serviceName string) (string, error) {
 		"--filter", "label=com.docker.swarm.service.name=" + serviceName,
 		"--format", "{{.ID}}",
 	}
-	output, err := runCommandOutput(cmd, false)
+	output, err := _runCommandOutput(cmd, false)
 	if err != nil {
 		return "", fmt.Errorf("docker ps command failed: %v", err)
 	}

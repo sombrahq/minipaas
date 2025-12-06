@@ -13,7 +13,8 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.24'
+  PY_VERSION: '3.14'
 
 jobs:
   test:
@@ -59,3 +60,21 @@ jobs:
           done
         env:
           PGPASSWORD: postgres
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PY_VERSION }}
+
+      - name: Install system dependencies for Pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev
+
+      - name: Validate docs
+        run: make build-docs

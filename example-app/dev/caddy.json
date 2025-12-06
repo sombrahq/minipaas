@@ -1,0 +1,42 @@
+{
+  "apps": {
+    "http": {
+      "servers": {
+        "minipaas": {
+          "automatic_https": {
+            "disable": true,
+            "disable_redirects": true
+          },
+          "listen": [
+            ":8000"
+          ],
+          "routes": [
+            {
+              "handle": [
+                {
+                  "handler": "reverse_proxy",
+                  "upstreams": [
+                    {
+                      "dial": "minipaas_example:8080"
+                    }
+                  ]
+                }
+              ],
+              "match": [
+                {
+                  "host": [
+                    "localhost"
+                  ],
+                  "path": [
+                    "/*"
+                  ]
+                }
+              ],
+              "terminal": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

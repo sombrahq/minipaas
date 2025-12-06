@@ -1,0 +1,56 @@
+site_name: MiniPaaS
+site_url: https://minipaas.sombrahq.com/
+site_description: Lightweight Swarm-based PaaS toolkit.
+site_author: SombraHQ
+
+repo_url: https://github.com/sombrahq/minipaas
+repo_name: sombrahq/minipaas
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - search.share
+    - navigation.footer
+    - content.action.edit
+
+plugins:
+  - search
+  - social
+  - offline
+
+nav:
+  - Home: index.md
+  - Role:
+      - Overview: role/index.md
+      - Installation: role/installation.md
+      - Configuration: role/configuration.md
+      - Usage: role/usage.md
+      - Inventory: role/inventory.md
+      - Variables: role/variables.md
+      - TLS & Docker API: role/tls.md
+      - Swarm: role/swarm.md
+      - Firewall: role/firewall.md
+      - Monitoring: role/monitoring.md
+  - CLI:
+      - Overview: cli/index.md
+      - Installation: cli/installation.md
+      - Configuration: cli/minipaas-file.md
+      - Usage: cli/usage.md
+      - References:
+          - Commands: cli/commands.md
+          - Secrets & Configs: cli/secrets-configs.md
+          - Certs (TLS): cli/certs.md
+          - Scaffolding: cli/scaffolding.md
+          - Workflows: cli/workflows.md
+  - SQL:
+      - Overview: sql/index.md
+      - Installation: sql/installation.md
+      - Usage: sql/usage.md
+  - Us:
+      - About: about.md
+      - Contact: contact.md
+
+copyright: Copyright &copy; 2025 Yunier Rojas García.

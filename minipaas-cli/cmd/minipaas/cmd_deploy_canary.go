@@ -17,7 +17,7 @@ func (args *DeployCanaryArgs) Run() {
 	checkErrorPanic(err, fmt.Sprintf("❌ Fail to load configuration file: %s", configFile))
 	setApiEnvVars(args.Env, cfg, args.Verbose)
 
-	composeFiles := append(cfg.Project.Files, filepath.Join(args.Env, deployFile))
+	composeFiles := append(cfg.Project.Files, filepath.Join(args.Env, appsFile))
 	deployment, err := composeLoadDeployProject(composeFiles)
 	checkErrorPanic(err, fmt.Sprintf("❌ Fail to load project files: %s", composeFiles))
 
